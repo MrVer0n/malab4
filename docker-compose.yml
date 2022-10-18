@@ -1,0 +1,44 @@
+version : '3.0'
+
+services:
+  ms-consumer:
+    container_name: ms-consumer
+    build:
+      context: ./malab-2
+    ports:
+      - 2001:2001
+    command: npm run dev
+    restart: always
+    depends_on: 
+      rabbitmq:
+        condition: service_healthy
+  ms-sender:
+    container_name: ms-sender
+    build:
+      context: ./malab-1
+    depends_on: 
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - 2000:2000
+    command: npm run dev
+    restart: always
+  rabbitmq:
+    container_name: rabbitmq
+    volumes:
+        - ./rabbitmq/data/:/var/lib/rabbitmq/
+        - ./rabbitmq/log/:/var/log/rabbitmq
+    hostname: rabbitmq
+    image: rabbitmq:management
+    ports:
+      - 5672:5672
+      - 15672:15672
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: 124
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 30s
+      timeout: 30s
+      retries: 3
+
